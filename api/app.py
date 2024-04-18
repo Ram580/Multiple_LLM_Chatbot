@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from langchain.prompts import ChatPromptTemplate
 from langchain.chat_models import ChatOpenAI
+import google.generativeai as genai
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langserve import add_routes
 import uvicorn
 import os
@@ -10,6 +13,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 os.environ['OPENAI_API_KEY']=os.getenv("OPENAI_API_KEY")
+
+os.environ['GOOGLE_API_KEY'] = os.getenv('GOOGLE_API_KEY')
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
 
 app=FastAPI(
     title="Langchain Server",
@@ -21,9 +28,10 @@ app=FastAPI(
 add_routes(
     app,
     ChatOpenAI(),
-    path="/openai"
+    path="/Google_GenAI"
 )
-model=ChatOpenAI()
+model=ChatGoogleGenerativeAI(model="gemini-pro",
+                            temperature=0,convert_system_message_to_human=True)
 ##ollama llama2
 llm=Ollama(model="llama2")
 
