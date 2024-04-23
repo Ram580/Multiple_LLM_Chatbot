@@ -3,6 +3,9 @@ import os
 from langchain_groq import ChatGroq
 from langchain_community.document_loaders import WebBaseLoader
 from langchain.embeddings import OllamaEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
+import google.generativeai as genai
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
@@ -16,8 +19,14 @@ load_dotenv()
 ## load the Groq API key
 groq_api_key=os.environ['GROQ_API_KEY']
 
+## load GoogleGenerativeAI Embeddings
+os.environ['GOOGLE_API_KEY'] = os.getenv('GOOGLE_API_KEY')
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
 if "vector" not in st.session_state:
-    st.session_state.embeddings=OllamaEmbeddings()
+    #st.session_state.embeddings=OllamaEmbeddings()
+    #st.session_state.embeddings = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
+    st.session_state.embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     st.session_state.loader=WebBaseLoader("https://docs.smith.langchain.com/")
     st.session_state.docs=st.session_state.loader.load()
 
@@ -26,9 +35,9 @@ if "vector" not in st.session_state:
     st.session_state.vectors=FAISS.from_documents(st.session_state.final_documents,st.session_state.embeddings)
 
 st.title("ChatGroq Demo")
-llm=ChatGroq(groq_api_key=groq_api_key,
-             model_name="mixtral-8x7b-32768")
-
+llm=ChatGroq(groq_api_key=groq_api_key,model_name="llama3-8b-8192")
+             #model_name="mixtral-8x7b-32768")
+embeddings = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
 prompt=ChatPromptTemplate.from_template(
 """
 Answer the questions based on the provided context only.
@@ -44,11 +53,11 @@ document_chain = create_stuff_documents_chain(llm, prompt)
 retriever = st.session_state.vectors.as_retriever()
 retrieval_chain = create_retrieval_chain(retriever, document_chain)
 
-prompt=st.text_input("Input you prompt here")
+input=st.text_input("Input you prompt here") 
 
 if prompt:
     start=time.process_time()
-    response=retrieval_chain.invoke({"input":prompt})
+    response=retrieval_chain.invoke({"input":input})
     print("Response time :",time.process_time()-start)
     st.write(response['answer'])
 
