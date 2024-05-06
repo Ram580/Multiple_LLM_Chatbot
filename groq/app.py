@@ -35,7 +35,12 @@ if "vector" not in st.session_state:
     st.session_state.vectors=FAISS.from_documents(st.session_state.final_documents,st.session_state.embeddings)
 
 st.title("ChatGroq Demo")
-llm=ChatGroq(groq_api_key=groq_api_key,model_name="llama3-8b-8192")
+
+available_llms = ["llama3-8b-8192", "mixtral-8x7b-32768", "llama3-70b-8192","gemma-7b-it"]
+# Create a dropdown to select the LLM
+selected_llm = st.selectbox("Select an LLM:", available_llms)
+
+llm=ChatGroq(groq_api_key=groq_api_key,model_name=selected_llm)
              #model_name="mixtral-8x7b-32768")
 embeddings = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
 prompt=ChatPromptTemplate.from_template(
